@@ -63,15 +63,15 @@ with col1:
         
         # Dibujar Hojas en cada nudo
         for lado in [-1, 1]:
-            # Curva de la hoja con Path de Matplotlib
+            # Forma de la hoja simplificada
             verts = [
                 (0, y_fin), 
-                (lado * 2.5, y_fin + 1.5), 
-                (lado * 4.0, y_fin + 0.5), 
-                (lado * 1.5, y_fin - 1.0), 
+                (lado * 2.5, y_fin + 1.0), 
+                (lado * 3.5, y_fin + 0.2), 
+                (lado * 1.5, y_fin - 0.8), 
                 (0, y_fin)
             ]
-            codes = [Path.MOVETO, Path.CURVE5, Path.CURVE5, Path.CURVE5, Path.CLOSEPOLY]
+            codes = [Path.MOVETO, Path.LINETO, Path.LINETO, Path.LINETO, Path.CLOSEPOLY]
             path = Path(verts, codes)
             patch = patches.PathPatch(path, facecolor='#388e3c', edgecolor='#81c784', lw=1.2, zorder=3, alpha=0.9)
             ax.add_patch(patch)
