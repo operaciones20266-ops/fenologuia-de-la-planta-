@@ -60,13 +60,23 @@ with columna1:
 
         # Dibujar Hojas en cada nudo
         for lado in [-1, 1]:
-            # Forma de la hoja simplificada
+            # Forma de la hoja simplificada (5 vértices)
             verts = [
                 (0, y_fin),
                 (lado * 2.5, y_fin + 1.0),
+                (lado * 3.5, y_fin + 0.2),
+                (lado * 1.5, y_fin - 0.8),
+                (0, y_fin)
             ]
 
-            codigos = [Path.MOVETO, Path.LINETO, Path.LINETO, Path.LINETO, Path.CLOSEPOLY]
+            # 5 códigos para coincidir exactamente con los 5 vértices
+            codigos = [
+                Path.MOVETO,
+                Path.LINETO,
+                Path.LINETO,
+                Path.LINETO,
+                Path.CLOSEPOLY
+            ]
             camino = Path(verts, codigos)
             parche = patches.PathPatch(camino, facecolor='#388e3c', edgecolor='#81c784', lw=1.2, zorder=3, alpha=0.9)
             ax.add_patch(parche)
