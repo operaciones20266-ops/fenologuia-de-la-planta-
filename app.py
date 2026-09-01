@@ -1,66 +1,102 @@
 import streamlit as st
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+from matplotlib.path import Path
 
-st.set_page_config(page_title="Registro de Planta", layout="centered")
+st.set_page_config(page_title="Registro de Planta", layout="wide")
 
-st.title("🌱 Registro de Crecimiento de Planta")
-st.write("Ingresa los datos para ver crecer el tallo y sus nudos.")
+# Estilo personalizado en CSS para simular el tema oscuro del Dashboard
+st.markdown("""
+<style>
+    .main { background-color: #121e17; }
+    h1, h2, h3, p, label { color: #e0f2e9 !important; }
+</style>
+""", unsafe_allow_html=True)
 
-# Inicializar historial en la sesión
+st.title("🌱 PLANTA DE ESTUDIO (FASE VEGETATIVA)")
+
 if "nudos" not in st.session_state:
     st.session_state["nudos"] = [
-        {"nudo": "Nudo 1", "longitud": 5.0, "grosor": 8},
-        {"nudo": "Nudo 2", "longitud": 8.5, "grosor": 7},
-        {"nudo": "Nudo 3", "longitud": 6.0, "grosor": 5}
+        {"nudo": "Nudo 1", "longitud": 5.0, "grosor": 8.0},
+        {"nudo": "Nudo 2", "longitud": 8.5, "grosor": 7.0},
+        {"nudo": "Nudo 3", "longitud": 6.0, "grosor": 5.0}
     ]
 
-# Layout de 2 columnas
-col1, col2 = st.columns([1, 1])
+col1, col2 = st.columns([1.2, 1])
 
 with col2:
-    st.subheader("📝 Registrar Nuevo Nudo")
+    st.subheader("📋 REGISTRO DE CRECIMIENTO")
     nombre_nudo = f"Nudo {len(st.session_state['nudos']) + 1}"
-    st.text(f"Registrando: {nombre_nudo}")
+    st.info(f"Registrando: **{nombre_nudo}**")
     
     longitud = st.number_input("Longitud del entrenudo (cm):", min_value=0.5, value=4.0, step=0.5)
-    grosor = st.number_input("Grosor del tallo (mm):", min_value=1, value=5, step=1)
+    grosor = st.number_input("Grosor del tallo (mm):", min_value=1.0, value=4.0, step=0.5)
     
-    if st.button("➕ Agregar a la Planta"):
+    if st.button("➕ Agregar a la Planta", use_container_width=True):
         st.session_state["nudos"].append({
             "nudo": nombre_nudo,
             "longitud": longitud,
             "grosor": grosor
         })
-        st.success(f"{nombre_nudo} agregado con éxito.")
+        st.success(f"{nombre_nudo} agregado.")
         st.rerun()
 
 with col1:
-    st.subheader("📊 Vista de la Planta")
+    # Crear gráfica con estética de ilustración técnica
+    fig, ax = plt.subplots(figsize=(6, 9), facecolor='#1b2a22')
+    ax.set_facecolor('#1b2a22')
     
-    # Dibujar la planta apilada con Matplotlib
-    fig, ax = plt.subplots(figsize=(3, 6))
+    altura_acumulada = 0
+    puntos_nudos = [(0, 0)]
     
-    bottom = 0
-    colores = ['#2e7d32', '#388e3c', '#43a047', '#4caf50', '#66bb6a', '#81c784']
+    # Dibujar tallo con grosor variable
+    for item in st.session_state["nudos"]:
+        y_inicio = altura_acumulada
+        y_fin = altura_acumulada + item["longitud"]
+        grosor_linea = item["grosor"] * 1.5
+        
+        # Segmento del tallo
+        ax.plot([0, 0], [y_inicio, y_fin], color='#4caf50', linewidth=grosor_linea, zorder=2, solid_capstyle='round')
+        
+        altura_acumulada = y_fin
+        puntos_nudos.append((0, altura_acumulada))
+        
+        # Dibujar Hojas en cada nudo
+        for lado in [-1, 1]:
+            # Curva de la hoja con Path de Matplotlib
+            verts = [
+                (0, y_fin), 
+                (lado * 2.5, y_fin + 1.5), 
+                (lado * 4.0, y_fin + 0.5), 
+                (lado * 1.5, y_fin - 1.0), 
+                (0, y_fin)
+            ]
+            codes = [Path.MOVETO, Path.CURVE5, Path.CURVE5, Path.CURVE5, Path.CLOSEPOLY]
+            path = Path(verts, codes)
+            patch = patches.PathPatch(path, facecolor='#388e3c', edgecolor='#81c784', lw=1.2, zorder=3, alpha=0.9)
+            ax.add_patch(patch)
+            
+            # Nervadura de la hoja
+            ax.plot([0, lado * 3.2], [y_fin, y_fin + 0.6], color='#a5d6a7', lw=0.8, zorder=4)
+
+        # Punto del Nudo
+        ax.plot(0, y_fin, marker='o', color='#a5d6a7', markersize=8, zorder=5)
+        
+        # Etiqueta tipo Cuadro de Información (Callout)
+        ax.annotate(
+            f"{item['nudo']}\nAlt: {y_fin} cm | Grosor: {item['grosor']} mm",
+            xy=(0, y_fin), xytext=(2.5 if len(puntos_nudos) % 2 == 0 else -6.5, y_fin),
+            bbox=dict(boxstyle="round,pad=0.4", fc="#263a2e", ec="#81c784", lw=1),
+            arrowprops=dict(arrowstyle="->", connectionstyle="arc3,rad=0", color="#81c784", lw=1.2),
+            color="#e0f2e9", fontsize=8, fontweight='bold', zorder=6
+        )
+
+    # Yema Apical (punta de la planta)
+    ax.plot(0, altura_acumulada + 0.5, marker='^', color='#c8e6c9', markersize=12, zorder=5)
     
-    for i, item in enumerate(st.session_state["nudos"]):
-        color = colores[i % len(colores)]
-        
-        # Dibujar entrenudo (tallo)
-        ax.bar("Planta", item["longitud"], bottom=bottom, width=0.3, color=color, edgecolor="black")
-        
-        # Punto del nudo
-        posicion_nudo = bottom + item["longitud"]
-        ax.plot(0, posicion_nudo, marker='o', color='brown', markersize=8)
-        
-        # Etiqueta del nudo
-        ax.text(0.2, posicion_nudo, f" {item['nudo']} ({item['longitud']} cm)", va="center", fontsize=9)
-        
-        bottom += item["longitud"]
-        
-    ax.set_ylabel("Altura acumulada (cm)")
-    ax.set_ylim(0, max(bottom + 5, 20))
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
+    # Ajustes de límites y ocultar ejes
+    ax.set_xlim(-8, 8)
+    ax.set_ylim(-2, altura_acumulada + 4)
+    ax.axis('off')
     
-    st.pyplot(fig)
+    st.pyplot(fig, use_container_width=True)
