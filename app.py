@@ -14,7 +14,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-st.title("🌱 PLANTA DE ESTUDIO (POLEPOS)")
+st.title("🌱 PLANTA DE ESTUDIO (FASE VEGETATIVA)")
 
 if "nudos" not in st.session_state:
     st.session_state["nudos"] = []
@@ -26,7 +26,8 @@ with columna2:
     nombre_nudo = f"Nudo {len(st.session_state['nudos']) + 1}"
     st.info(f"Registrando: **{nombre_nudo}**")
 
-  
+    longitud = st.number_input("Longitud del entrenudo (cm):", min_value=0.5, value=4.0, step=0.5)
+    grosor = st.number_input("Grosor del tallo (mm):", min_value=1.0, value=4.0, step=0.5)
 
     if st.button("➕ Agregar a la Planta"):
         st.session_state["nudos"].append({
