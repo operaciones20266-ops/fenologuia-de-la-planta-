@@ -17,8 +17,6 @@ st.title("🌱 PLANTA DE ESTUDIO (FASE VEGETATIVA)")
 
 if "nudos" not in st.session_state:
     st.session_state["nudos"] = [
-        {"nudo": "Nudo 2", "longitud": 8.5, "grosor": 7.0},
-        {"nudo": "Nudo 3", "longitud": 6.0, "grosor": 5.0}
     ]
 
 col1, col2 = st.columns([1.2, 1])
