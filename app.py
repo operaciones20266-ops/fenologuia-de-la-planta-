@@ -14,7 +14,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-st.title("🌱 PLANTA DE ESTUDIO (POELPOS)")
+st.title("🌱 PLANTA DE ESTUDIO (POLEPOS)")
 
 if "nudos" not in st.session_state:
     st.session_state["nudos"] = []
