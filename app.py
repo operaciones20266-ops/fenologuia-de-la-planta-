@@ -64,9 +64,6 @@ with columna1:
             verts = [
                 (0, y_fin),
                 (lado * 2.5, y_fin + 1.0),
-                (lado * 3.5, y_fin + 0.2),
-                (lado * 1.5, y_fin - 0.8),
-                (0, y_fin)
             ]
 
             codigos = [Path.MOVETO, Path.LINETO, Path.LINETO, Path.LINETO, Path.CLOSEPOLY]
