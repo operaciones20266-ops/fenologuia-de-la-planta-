@@ -2,28 +2,23 @@ import streamlit as st
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import pandas as pd
-import gspread
+from supabase import create_client, Client
 
-# Configuración de página
 st.set_page_config(page_title="Registro de Planta", layout="wide")
 
-# Conexión directa con Google Sheets usando Secrets
 @st.cache_resource
-def get_gsheet():
-    creds = dict(st.secrets["gdrive"])
-    # Reparar saltos de línea de la private key
-    creds["private_key"] = creds["private_key"].replace("\\n", "\n")
-    gc = gspread.service_account_from_dict(creds)
-    sheet_url = st.secrets["spreadsheet_url"]
-    return gc.open_by_url(sheet_url).sheet1
+def init_supabase() -> Client:
+    url = st.secrets["SUPABASE_URL"]
+    key = st.secrets["SUPABASE_KEY"]
+    return create_client(url, key)
 
-sheet = get_gsheet()
+supabase = init_supabase()
 
-# Cargar datos desde la nube
 try:
-    records = sheet.get_all_records()
-    df_datos = pd.DataFrame(records)
-except Exception:
+    response = supabase.table("nudos").select("*").order("nudo", desc=False).execute()
+    data = response.data
+    df_datos = pd.DataFrame(data)
+except Exception as e:
     df_datos = pd.DataFrame(columns=["nudo", "longitud_cm", "grosor_mm"])
 
 nudos = df_datos.to_dict(orient="records") if not df_datos.empty else []
@@ -39,9 +34,13 @@ with columna1:
 
     if st.button("+ Agregar a la Planta"):
         nuevo_nudo = len(nudos) + 1
-        # Insertar nueva fila en Google Sheets
-        sheet.append_row([nuevo_nudo, longitud, grosor])
-        st.success("¡Datos guardados!")
+        supabase.table("nudos").insert({
+            "nudo": nuevo_nudo,
+            "longitud_cm": longitud,
+            "grosor_mm": grosor
+        }).execute()
+        
+        st.success("¡Datos guardados en la nube!")
         st.rerun()
 
 with columna2:
