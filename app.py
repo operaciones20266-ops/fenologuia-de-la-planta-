@@ -2,106 +2,40 @@ import streamlit as st
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib.path import Path
+from streamlit_gsheets import GSheetsConnection
+import pandas as pd
 
 # Configuración de página
 st.set_page_config(page_title="Registro de Planta", layout="wide")
 
-# Estilo personalizado en CSS para simular el tema oscuro del Dashboard
-st.markdown("""
-<style>
-    .main { background-color: #121e17; }
-    h1, h2, h3, p, label { color: #e0f2e9 !important; }
-</style>
-""", unsafe_allow_html=True)
+# Conectar con Google Sheets
+conn = st.connection("gsheets", type=GSheetsConnection)
 
-st.title("🌱 PLANTA DE ESTUDIO (FASE VEGETATIVA)")
+# Cargar datos guardados desde la nube (Google Sheets)
+df_datos = conn.read(ttl=0) # ttl=0 para actualizar al instante
 
-if "nudos" not in st.session_state:
-    st.session_state["nudos"] = []
+# Convertir la hoja a lista de nudos para tu código actual
+nudos = df_datos.to_dict(orient="records") if not df_datos.empty else []
+
+st.title("🌱 PLANTA DE ESTUDIO (POLEPOS)")
 
 columna1, columna2 = st.columns([1, 2])
 
-with columna2:
-    st.subheader("📋 REGISTRO DE CRECIMIENTO")
-    nombre_nudo = f"Nudo {len(st.session_state['nudos']) + 1}"
-    st.info(f"Registrando: **{nombre_nudo}**")
-
-    longitud = st.number_input("Longitud del entrenudo (cm):", min_value=0.5, value=4.0, step=0.5)
-    grosor = st.number_input("Grosor del tallo (mm):", min_value=1.0, value=4.0, step=0.5)
-
-    if st.button("➕ Agregar a la Planta"):
-        st.session_state["nudos"].append({
-            "desnudo": nombre_nudo,
-            "longitud": longitud,
-            "grosor": grosor
-        })
-        st.success(f"{nombre_nudo} agregado.")
-        st.rerun()
-
 with columna1:
-    # Crear gráfica con estética de ilustración técnica
-    fig, ax = plt.subplots(figsize=(6, 9), facecolor='#1b2a22')
-    ax.set_facecolor('#1b2a22')
-
-    altura_acumulada = 0
-    puntos_nudos = [(0, 0)]
-
-    # Dibujar tallo con grosor variable
-    for item in st.session_state["nudos"]:
-        y_inicio = altura_acumulada
-        y_fin = item["longitud"]
-        grosor_linea = item["grosor"] * 1.5
-
-        # Segmento del tallo
-        ax.plot([0, 0], [y_inicio, y_fin], color='#4caf50', linewidth=grosor_linea, zorder=2)
-
-        altura_acumulada = y_fin
-        puntos_nudos.append((0, altura_acumulada))
-
-        # Dibujar Hojas en cada nudo
-        for lado in [-1, 1]:
-            # Forma de la hoja simplificada (5 vértices)
-            verts = [
-                (0, y_fin),
-                (lado * 2.5, y_fin + 1.0),
-                (lado * 3.5, y_fin + 0.2),
-                (lado * 1.5, y_fin - 0.8),
-                (0, y_fin)
-            ]
-
-            # 5 códigos para coincidir exactamente con los 5 vértices
-            codigos = [
-                Path.MOVETO,
-                Path.LINETO,
-                Path.LINETO,
-                Path.LINETO,
-                Path.CLOSEPOLY
-            ]
-            camino = Path(verts, codigos)
-            parche = patches.PathPatch(camino, facecolor='#388e3c', edgecolor='#81c784', lw=1.2, zorder=3, alpha=0.9)
-            ax.add_patch(parche)
-
-            # Nervadura de la hoja
-            ax.plot([0, lado * 3.2], [y_fin, y_fin + 0.6], color='#a5d6a7', lw=0.8, zorder=4)
-
-        # Punto del Nudo
-        ax.plot(0, y_fin, marker='o', color='#a5d6a7', markersize=8, zorder=5)
-
-        # Etiqueta tipo Cuadro de Información (Callout)
-        ax.annotate(
-            f"{item['desnudo']}\nAlt: {y_fin} cm | Grosor: {item['grosor']} mm",
-            xy=(0, y_fin), xytext=(2.5 if len(puntos_nudos) % 2 == 0 else -6.5, y_fin),
-            bbox=dict(boxstyle="round,pad=0.4", fc="#263a2e", ec="#81c784", lw=1),
-            arrowprops=dict(arrowstyle="->", connectionstyle="arc3,rad=0", color="#81c784", lw=1.2),
-            color="#e0f2e9", fontsize=8, fontweight='bold', zorder=6
-        )
-
-    # Yema Apical (punta de la planta)
-    ax.plot(0, altura_acumulada + 0.5, marker='^', color='#c8e6c9', markersize=12, zorder=5)
-
-    # Ajustes de límites y ocultar ejes
-    ax.set_xlim(-8, 8)
-    ax.set_ylim(-2, altura_acumulada + 4)
-    ax.axis('off')
-
-    st.pyplot(fig, use_container_width=True)
+    st.subheader("Registro de Crecimiento")
+    longitud = st.number_input("Longitud del entrenudo (cm):", min_value=0.0, step=0.1)
+    grosor = st.number_input("Grosor del tallo (mm):", min_value=0.0, step=0.1)
+    
+    if st.button("+ Agregar a la Planta"):
+        nuevo_registro = pd.DataFrame([{
+            "nudo": len(nudos) + 1,
+            "longitud_cm": longitud,
+            "grosor_mm": grosor
+        }])
+        
+        # Unir el nuevo registro y guardarlo automáticamente en la nube
+        df_actualizado = pd.concat([df_datos, nuevo_registro], ignore_index=True)
+        conn.update(data=df_actualizado)
+        
+        st.success("¡Datos guardados en la nube!")
+        st.rerun()
