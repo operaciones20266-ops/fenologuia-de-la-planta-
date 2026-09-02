@@ -4,8 +4,10 @@ import matplotlib.patches as patches
 import pandas as pd
 from supabase import create_client, Client
 
+# Configuración de página
 st.set_page_config(page_title="Registro de Planta", layout="wide")
 
+# Inicializar conexión con Supabase usando Secrets
 @st.cache_resource
 def init_supabase() -> Client:
     url = st.secrets["SUPABASE_URL"]
@@ -14,6 +16,7 @@ def init_supabase() -> Client:
 
 supabase = init_supabase()
 
+# Cargar datos desde Supabase
 try:
     response = supabase.table("nudos").select("*").order("nudo", desc=False).execute()
     data = response.data
@@ -33,13 +36,14 @@ with columna1:
     grosor = st.number_input("Grosor del tallo (mm):", min_value=0.0, step=0.1)
 
     if st.button("+ Agregar a la Planta"):
-        nuevo_nudo = len(nudos) + 1
+        nuevo_nudo = int(len(nudos) + 1)
+        # Insertar registro directamente en Supabase
         supabase.table("nudos").insert({
             "nudo": nuevo_nudo,
-            "longitud_cm": longitud,
-            "grosor_mm": grosor
+            "longitud_cm": float(longitud),
+            "grosor_mm": float(grosor)
         }).execute()
-        
+
         st.success("¡Datos guardados en la nube!")
         st.rerun()
 
